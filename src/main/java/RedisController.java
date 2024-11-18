@@ -22,9 +22,16 @@ public class RedisController {
     }
 
     private Response handleSet(Command command) {
-        var key = command.args().getFirst();
-        var value = command.args().getLast();
-        redisService.setValue(key, value);
+        if (command.args().size() == 2) {
+            var key = command.args().getFirst();
+            var value = command.args().getLast();
+            redisService.setValue(key, value);
+        } else if (command.args().size() == 4) {
+            var key = command.args().getFirst();
+            var value = command.args().get(1);
+            var expiry = Long.parseLong(command.args().getLast());
+            redisService.setValue(key, value, expiry);
+        }
         return new Response(Optional.of("OK"), Response.Type.Simple);
     }
 

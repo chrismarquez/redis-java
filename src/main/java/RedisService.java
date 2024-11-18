@@ -17,5 +17,19 @@ public class RedisService {
         values.put(key, value);
     }
 
+    public void setValue(String key, String value, long expiry) {
+        values.put(key, value);
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(expiry);
+                values.remove(key);
+            } catch (InterruptedException _) {
+                values.remove(key);
+            }
+
+        });
+        thread.start();
+    }
+
 
 }
