@@ -1,24 +1,25 @@
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
-import java.net.Socket;
 
 public class Main {
 
-    private static void sendPong(Socket clientSocket) {
+    private static void sendPong(PrintWriter writer) {
         final var message = "+PONG\r\n";
-        try (var stream = clientSocket.getOutputStream()) {
-            var writer = new PrintWriter(stream);
-            writer.write(message);
-            writer.flush();
-        } catch (IOException e) {
-            System.out.println("Shit");
-        }
+        writer.write(message);
+        writer.flush();
     }
 
     private static void acceptConnection(ServerSocket serverSocket) {
         try (var clientSocket = serverSocket.accept()) {
-            sendPong(clientSocket);
+            var reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            var writer = new PrintWriter(clientSocket.getOutputStream());
+            String input;
+            while ((input = reader.readLine()) != null) {
+                System.out.println(input);
+                if (input.toLowerCase().startsWith("ping")) {
+                    sendPong(writer);
+                }
+            }
         } catch (IOException e) {
             System.out.println("Client socket error");
         }
@@ -33,9 +34,7 @@ public class Main {
     private static void listen(int port) {
         try (var serverSocket = initServer(port)) {
             System.out.println("Listening on port " + port);
-            while (true) {
-                acceptConnection(serverSocket);
-            }
+            acceptConnection(serverSocket);
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
