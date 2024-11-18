@@ -1,3 +1,7 @@
+package middleware;
+
+import model.Command;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;

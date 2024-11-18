@@ -1,3 +1,5 @@
+package model;
+
 import java.util.List;
 
 public record Command(String rawName, List<String> args) {
@@ -7,6 +9,7 @@ public record Command(String rawName, List<String> args) {
         PING,
         GET,
         SET,
+        CONFIG,
         UNKNOWN,
     }
 

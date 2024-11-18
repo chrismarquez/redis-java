@@ -1,3 +1,7 @@
+package service;
+
+import config.Config;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -5,8 +9,11 @@ import java.util.Optional;
 public class RedisService {
 
     private final Map<String, String> values = new HashMap<>();
+    private final Config config;
 
-    public RedisService() {}
+    public RedisService(Config config) {
+        this.config = config;
+    }
 
     public Optional<String> getValue(String key) {
         if (!values.containsKey(key)) return Optional.empty();
@@ -30,6 +37,5 @@ public class RedisService {
         });
         thread.start();
     }
-
 
 }

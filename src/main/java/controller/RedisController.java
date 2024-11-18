@@ -1,24 +1,35 @@
+package controller;
+
+import config.Config;
+import model.*;
+import service.RedisService;
+
+import java.util.Arrays;
 import java.util.Optional;
 
 public class RedisController {
 
-    private final RedisService redisService = new RedisService();
+    private final RedisService redisService;
+    private final Config config;
 
-    public RedisController() {}
+    public RedisController(Config config, RedisService redisService) {
+        this.config = config;
+        this.redisService = redisService;
+    }
 
     private Response handlePing(Command command) {
-        return new Response(Optional.of("PONG"), Response.Type.Simple);
+        return new SimpleResponse("PONG");
     }
 
     private Response handleEcho(Command command) {
         var echo =  command.args().getFirst();
-        return new Response(Optional.of(echo), Response.Type.Bulk);
+        return new BulkResponse(Optional.of(echo));
     }
 
     private Response handleGet(Command command) {
         var key = command.args().getFirst();
         var value = redisService.getValue(key);
-        return new Response(value, Response.Type.Bulk);
+        return new BulkResponse(value);
     }
 
     private Response handleSet(Command command) {
@@ -32,7 +43,16 @@ public class RedisController {
             var expiry = Long.parseLong(command.args().getLast());
             redisService.setValue(key, value, expiry);
         }
-        return new Response(Optional.of("OK"), Response.Type.Simple);
+        return new SimpleResponse("OK");
+    }
+
+    private Response handleConfig(Command command) {
+        var _ = command.args().getFirst();
+        final var configKey = command.args().getLast();
+        final var configValue = this.config.getConfig(configKey);
+        final var keyResponse = new BulkResponse(Optional.of(configKey));
+        final var valueResponse = new BulkResponse(configValue);
+        return new ArrayResponse(Arrays.asList(keyResponse, valueResponse));
     }
 
     public Response process(Command command) {
@@ -42,7 +62,8 @@ public class RedisController {
             case ECHO -> this.handleEcho(command);
             case GET -> this.handleGet(command);
             case SET -> this.handleSet(command);
-            case UNKNOWN -> new Response(Optional.empty(), Response.Type.Simple);
+            case CONFIG ->  this.handleConfig(command);
+            case UNKNOWN -> new SimpleResponse("");
         };
     }
 

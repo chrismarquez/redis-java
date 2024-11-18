@@ -1,44 +1,27 @@
+import config.Config;
+import controller.RedisController;
+import service.RedisService;
+
 import java.io.*;
 import java.net.ServerSocket;
-import java.net.Socket;
 
 public class RedisServer {
 
-    private final RedisController controller = new RedisController();
+    private final RedisEventLoop eventLoop;
+    private final Config config;
 
-    public RedisServer() {}
+    public RedisServer(Config config) {
+        this.config = config;
 
-    private void handleCommands(RedisProtocolReader reader, RedisProtocolWriter writer) throws IOException {
-        Command command;
-        while((command = reader.getNextCommand()) != null) {
-            Response response = controller.process(command);
-            writer.writeEncoded(response);
-        }
-    }
-
-    private void handleConnection(Socket clientSocket) {
-        try {
-            var reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            var writer = new PrintWriter(clientSocket.getOutputStream());
-            var protocolReader = new RedisProtocolReader(reader);
-            var protocolWriter = new RedisProtocolWriter(writer);
-            handleCommands(protocolReader, protocolWriter);
-        }  catch (IOException e) {
-            System.out.println("Client socket error");
-        } finally {
-            try {
-                clientSocket.close();
-            } catch (IOException e) {
-                System.out.println("Closing socket error");
-            }
-        }
+        var service = new RedisService(config);
+        var controller = new RedisController(config, service);
+        this.eventLoop = new RedisEventLoop(config, controller);
     }
 
     private void acceptConnection(ServerSocket serverSocket) {
         try {
             var clientSocket = serverSocket.accept();
-            Thread thread = new Thread(() -> handleConnection(clientSocket));
-            thread.start();
+            eventLoop.addConnection(clientSocket);
         } catch (IOException e) {
             System.out.println("Client socket error");
         }
@@ -62,7 +45,8 @@ public class RedisServer {
     }
 
     public static void main(String[] args) {
-        RedisServer server = new RedisServer();
+        Config config = new Config(args);
+        RedisServer server = new RedisServer(config);
         int port = 6379;
         server.listen(port);
     }
