@@ -8,16 +8,11 @@ public class RedisServer {
 
     public RedisServer() {}
 
-    private void sendResponse(String message, PrintWriter writer) {
-        writer.write(message);
-        writer.flush();
-    }
-
-    private void handleCommands(RedisProtocolReader parser, PrintWriter writer) throws IOException {
+    private void handleCommands(RedisProtocolReader reader, RedisProtocolWriter writer) throws IOException {
         Command command;
-        while((command = parser.getNextCommand()) != null) {
-            String response = controller.process(command);
-            sendResponse(response, writer);
+        while((command = reader.getNextCommand()) != null) {
+            Response response = controller.process(command);
+            writer.writeEncoded(response);
         }
     }
 
@@ -25,8 +20,9 @@ public class RedisServer {
         try {
             var reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             var writer = new PrintWriter(clientSocket.getOutputStream());
-            var parser = new RedisProtocolReader(reader);
-            handleCommands(parser, writer);
+            var protocolReader = new RedisProtocolReader(reader);
+            var protocolWriter = new RedisProtocolWriter(writer);
+            handleCommands(protocolReader, protocolWriter);
         }  catch (IOException e) {
             System.out.println("Client socket error");
         } finally {

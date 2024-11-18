@@ -1,29 +1,42 @@
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.Optional;
 
 public class RedisController {
 
-    private final Map<Command.Name, Function<Command, String>> commandMapper = new HashMap<>();
+    private final RedisService redisService = new RedisService();
 
-    public RedisController() {
-        commandMapper.put(Command.Name.PING, this::handlePing);
-        commandMapper.put(Command.Name.ECHO, this::handleEcho);
+    public RedisController() {}
+
+    private Response handlePing(Command command) {
+        return new Response(Optional.of("PONG"), Response.Type.Simple);
     }
 
-    private String handlePing(Command command) {
-        return "+PONG\r\n";
+    private Response handleEcho(Command command) {
+        var echo =  command.args().getFirst();
+        return new Response(Optional.of(echo), Response.Type.Bulk);
     }
 
-    private String handleEcho(Command command) {
-        var echo = command.args().getFirst();
-        return String.format("$%d\r\n%s\r\n", echo.length(), echo);
+    private Response handleGet(Command command) {
+        var key = command.args().getFirst();
+        var value = redisService.getValue(key);
+        return new Response(value, Response.Type.Bulk);
     }
 
-    public String process(Command command) {
+    private Response handleSet(Command command) {
+        var key = command.args().getFirst();
+        var value = command.args().getLast();
+        redisService.setValue(key, value);
+        return new Response(Optional.of("OK"), Response.Type.Simple);
+    }
+
+    public Response process(Command command) {
         System.out.println(command);
-        var commandHandler = commandMapper.getOrDefault(command.name(), (_) -> "");
-        return commandHandler.apply(command);
+        return switch (command.name()) {
+            case PING -> this.handlePing(command);
+            case ECHO -> this.handleEcho(command);
+            case GET -> this.handleGet(command);
+            case SET -> this.handleSet(command);
+            case UNKNOWN -> new Response(Optional.empty(), Response.Type.Simple);
+        };
     }
 
 }

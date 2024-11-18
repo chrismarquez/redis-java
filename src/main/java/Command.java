@@ -5,6 +5,8 @@ public record Command(String rawName, List<String> args) {
     public enum Name {
         ECHO,
         PING,
+        GET,
+        SET,
         UNKNOWN,
     }
 
