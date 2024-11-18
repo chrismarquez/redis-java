@@ -2,25 +2,31 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Main {
+public class RedisServer {
 
-    private static void sendPong(PrintWriter writer) {
-        final var message = "+PONG\r\n";
+    private final RedisController controller = new RedisController();
+
+    public RedisServer() {}
+
+    private void sendResponse(String message, PrintWriter writer) {
         writer.write(message);
         writer.flush();
     }
 
-    private static void handleConnection(Socket clientSocket) {
+    private void handleCommands(RedisProtocolReader parser, PrintWriter writer) throws IOException {
+        Command command;
+        while((command = parser.getNextCommand()) != null) {
+            String response = controller.process(command);
+            sendResponse(response, writer);
+        }
+    }
+
+    private void handleConnection(Socket clientSocket) {
         try {
             var reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             var writer = new PrintWriter(clientSocket.getOutputStream());
-            String input;
-            while ((input = reader.readLine()) != null) {
-                System.out.println(input);
-                if (input.toLowerCase().startsWith("ping")) {
-                    sendPong(writer);
-                }
-            }
+            var parser = new RedisProtocolReader(reader);
+            handleCommands(parser, writer);
         }  catch (IOException e) {
             System.out.println("Client socket error");
         } finally {
@@ -32,7 +38,7 @@ public class Main {
         }
     }
 
-    private static void acceptConnection(ServerSocket serverSocket) {
+    private void acceptConnection(ServerSocket serverSocket) {
         try {
             var clientSocket = serverSocket.accept();
             Thread thread = new Thread(() -> handleConnection(clientSocket));
@@ -42,16 +48,16 @@ public class Main {
         }
     }
 
-    private static ServerSocket initServer(int port) throws IOException {
+    private ServerSocket initServer(int port) throws IOException {
         var serverSocket = new ServerSocket(port);
         serverSocket.setReuseAddress(true);
         return serverSocket;
     }
 
-    private static void listen(int port) {
+    private void listen(int port) {
         try (var serverSocket = initServer(port)) {
             System.out.println("Listening on port " + port);
-            while (true) {
+            while (!serverSocket.isClosed()) {
                 acceptConnection(serverSocket);
             }
         } catch (IOException e) {
@@ -60,8 +66,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        System.out.println("Logs from your program will appear here!");
+        RedisServer server = new RedisServer();
         int port = 6379;
-        listen(port);
+        server.listen(port);
     }
 }
