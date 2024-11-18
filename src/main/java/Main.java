@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 public class Main {
 
@@ -9,8 +10,8 @@ public class Main {
         writer.flush();
     }
 
-    private static void acceptConnection(ServerSocket serverSocket) {
-        try (var clientSocket = serverSocket.accept()) {
+    private static void handleConnection(Socket clientSocket) {
+        try {
             var reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             var writer = new PrintWriter(clientSocket.getOutputStream());
             String input;
@@ -20,6 +21,22 @@ public class Main {
                     sendPong(writer);
                 }
             }
+        }  catch (IOException e) {
+            System.out.println("Client socket error");
+        } finally {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                System.out.println("Closing socket error");
+            }
+        }
+    }
+
+    private static void acceptConnection(ServerSocket serverSocket) {
+        try {
+            var clientSocket = serverSocket.accept();
+            Thread thread = new Thread(() -> handleConnection(clientSocket));
+            thread.start();
         } catch (IOException e) {
             System.out.println("Client socket error");
         }
@@ -34,7 +51,9 @@ public class Main {
     private static void listen(int port) {
         try (var serverSocket = initServer(port)) {
             System.out.println("Listening on port " + port);
-            acceptConnection(serverSocket);
+            while (true) {
+                acceptConnection(serverSocket);
+            }
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         }
