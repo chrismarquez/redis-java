@@ -4,22 +4,25 @@ import middleware.PrefixLengthReader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RDBFile {
 
+    public record ExpirableValue(long timestamp, String value) {}
+    public record Database(Map<String, String> values, Map<String, ExpirableValue> expirableValues) {}
+
     private final InputStream stream;
 
     private static final int REDIS_MAGIC_WORD_LEN = 5;
     private static final int REDIS_VERSION_LEN = 4;
-    private int fileVersion;
-    private Map<String, String> auxiliaryFields = new HashMap<>();
-    private Map<Integer, Map<String, String>> databases = new HashMap<>();
 
-    private PrefixLengthReader prefixReader;
+
+    private final Map<String, String> auxiliaryFields = new HashMap<>();
+    private final Map<Integer, Database> databases = new HashMap<>();
+
+    private final PrefixLengthReader prefixReader;
+    private int fileVersion;
 
 
     private int currentDatabase = -1;
@@ -47,7 +50,7 @@ public class RDBFile {
 
     private void extractDBSelector() throws IOException {
         this.currentDatabase = prefixReader.extractNextLength();
-        this.databases.put(currentDatabase, new HashMap<>());
+        this.databases.put(currentDatabase, new Database(new HashMap<>(), new HashMap<>()));
     }
 
     private void extractResizeDBField() throws IOException {
@@ -63,7 +66,10 @@ public class RDBFile {
     private void extractExpirableInMSPair() throws IOException {
         final var timestamp = prefixReader.extractNextMillisTimestamp();
         final var valueType = stream.read();
-        extractPair(valueType);
+        final var key = prefixReader.extractNext();
+        final var value = prefixReader.extractNext();
+        final var database = databases.get(currentDatabase);
+        database.expirableValues().put(key, new ExpirableValue(timestamp, value));
     }
 
     private void extractEndOfFile() throws IOException {
@@ -75,11 +81,11 @@ public class RDBFile {
         final var key = prefixReader.extractNext();
         final var value = prefixReader.extractNext();
         final var database = databases.get(currentDatabase);
-        database.put(key, value);
+        database.values().put(key, value);
     }
 
 
-    public Map<Integer, Map<String, String>> parse() {
+    public Map<Integer, Database> parse() {
         int token;
         try {
             extractHeader();

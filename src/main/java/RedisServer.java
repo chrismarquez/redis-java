@@ -27,7 +27,16 @@ public class RedisServer {
             RDBFile file = new RDBFile(stream);
             final var databases = file.parse();
             final var database = databases.get(0);
-            database.entrySet().stream().forEach(entry -> service.setValue(entry.getKey(), entry.getValue()));
+            database.values().entrySet().stream().forEach(entry -> service.setValue(entry.getKey(), entry.getValue()));
+            database.expirableValues().entrySet().stream().forEach(entry -> {
+                final var key = entry.getKey();
+                final var expValue = entry.getValue();
+                final var currentTimestamp = System.currentTimeMillis();
+                final var expiry = expValue.timestamp() - currentTimestamp;
+                if (expiry > 0) {
+                    service.setValue(key, expValue.value());
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
