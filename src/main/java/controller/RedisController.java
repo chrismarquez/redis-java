@@ -10,6 +10,7 @@ import service.RedisService;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class RedisController {
 
@@ -50,6 +51,14 @@ public class RedisController {
         return new SimpleResponse("OK");
     }
 
+    private Response handleKeys(Command command) {
+        final var keys = redisService.getKeys();
+        final var responses = keys.stream()
+            .map(key -> (Response) new BulkResponse(Optional.of(key)))
+            .collect(Collectors.toList());
+        return new ArrayResponse(responses);
+    }
+
     private Response handleConfig(Command command) {
         var _ = command.args().getFirst();
         final var configKey = command.args().getLast();
@@ -66,6 +75,7 @@ public class RedisController {
             case ECHO -> this.handleEcho(command);
             case GET -> this.handleGet(command);
             case SET -> this.handleSet(command);
+            case KEYS -> this.handleKeys(command);
             case CONFIG ->  this.handleConfig(command);
             case UNKNOWN -> new SimpleResponse("");
         };

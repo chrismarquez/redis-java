@@ -3,6 +3,7 @@ package service;
 import config.Config;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,6 +37,10 @@ public class RedisService {
 
         });
         thread.start();
+    }
+
+    public List<String> getKeys() {
+        return values.keySet().stream().toList();
     }
 
 }

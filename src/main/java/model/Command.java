@@ -10,6 +10,7 @@ public record Command(String rawName, List<String> args) {
         GET,
         SET,
         CONFIG,
+        KEYS,
         UNKNOWN,
     }
 
