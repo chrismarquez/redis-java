@@ -22,7 +22,7 @@ public class RedisServer {
     private void loadStoredDatabases(Config config, RedisService service){
         final var directory = config.getConfig("dir").orElse("");
         final var fileName = config.getConfig("dbfilename").orElse("");
-        final var path = directory + fileName;
+        final var path = directory + "/" + fileName;
         try (final var stream = new FileInputStream(path)) {
             RDBFile file = new RDBFile(stream);
             final var databases = file.parse();
