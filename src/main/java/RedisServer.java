@@ -1,5 +1,6 @@
 import config.Config;
 import controller.RedisController;
+import model.RDBFile;
 import service.RedisService;
 
 import java.io.*;
@@ -12,10 +13,25 @@ public class RedisServer {
 
     public RedisServer(Config config) {
         this.config = config;
-
         var service = new RedisService(config);
         var controller = new RedisController(config, service);
         this.eventLoop = new RedisEventLoop(config, controller);
+        loadStoredDatabases(config, service);
+    }
+
+    private void loadStoredDatabases(Config config, RedisService service){
+        final var directory = config.getConfig("dir").orElse("");
+        final var fileName = config.getConfig("dbfilename").orElse("");
+        final var path = directory + fileName;
+        try (final var stream = new FileInputStream(path)) {
+            RDBFile file = new RDBFile(stream);
+            final var databases = file.parse();
+            final var database = databases.get(0);
+            database.entrySet().stream().forEach(entry -> service.setValue(entry.getKey(), entry.getValue()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void acceptConnection(ServerSocket serverSocket) {

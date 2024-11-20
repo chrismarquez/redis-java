@@ -1,9 +1,9 @@
 package middleware;
 
-import model.ArrayResponse;
-import model.BulkResponse;
-import model.Response;
-import model.SimpleResponse;
+import model.Responses.ArrayResponse;
+import model.Responses.BulkResponse;
+import model.Responses.Response;
+import model.Responses.SimpleResponse;
 
 import java.io.PrintWriter;
 import java.util.stream.Collectors;

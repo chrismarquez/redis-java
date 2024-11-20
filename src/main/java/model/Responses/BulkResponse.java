@@ -1,4 +1,4 @@
-package model;
+package model.Responses;
 
 import java.util.Optional;
 

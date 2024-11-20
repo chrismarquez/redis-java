@@ -3,7 +3,7 @@ import controller.RedisController;
 import middleware.RedisProtocolReader;
 import middleware.RedisProtocolWriter;
 import model.Command;
-import model.Response;
+import model.Responses.Response;
 
 import java.io.BufferedReader;
 import java.io.IOException;
