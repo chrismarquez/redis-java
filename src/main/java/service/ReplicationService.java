@@ -6,6 +6,7 @@ import middleware.RedisProtocolReader;
 import middleware.RedisProtocolWriter;
 import model.Responses.ArrayResponse;
 import model.Responses.BulkResponse;
+import model.Responses.Response;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,7 +14,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,19 +35,45 @@ public class ReplicationService {
             .map(ReplicaOf::new);
     }
 
-    public void sendPing() throws IOException {
+    public void doHandshake() throws IOException {
         if (this.masterInfo.isEmpty()) {
             return;
         }
         final var info = masterInfo.get();
         final var address = InetAddress.getByName(info.masterHost());
         try (final var socket = new Socket(address, info.masterPort())) {
+            var reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             var writer = new PrintWriter(socket.getOutputStream());
+            var protocolReader = new RedisProtocolReader(reader);
             var protocolWriter = new RedisProtocolWriter(writer);
-            var ping = new BulkResponse(Optional.of("PING"));
-            var request = new ArrayResponse(List.of(ping));
-            protocolWriter.writeEncoded(request);
+            protocolWriter.writeEncoded(getPing());
+            var pingSuccess = protocolReader.getNextOK();
+            protocolWriter.writeEncoded(getListeningPortConfig());
+            var listenPortSuccess = protocolReader.getNextOK();
+            protocolWriter.writeEncoded(getCapabilitiesConfig());
+            var capabilitiesSuccess = protocolReader.getNextOK();
+            System.out.println("PING: " + pingSuccess);
+            System.out.println("Listen: " + listenPortSuccess);
+            System.out.println("Capabilities: " + capabilitiesSuccess);
         }
+    }
+
+    private Response getPing() {
+        return ArrayResponse.from("PING");
+    }
+
+    private Response getListeningPortConfig() {
+        final var port = this.config.getConfig("port")
+            .orElse("0");
+        return getReplicaConfig("listening-port", port);
+    }
+
+    private Response getCapabilitiesConfig() {
+        return getReplicaConfig("capa", "psync2");
+    }
+
+    private Response getReplicaConfig(String key, String value) {
+        return ArrayResponse.from("REPLCONF", key, value);
     }
 
     public Map<String, String> getReplicationInfo() {

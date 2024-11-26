@@ -37,4 +37,9 @@ public class RedisProtocolReader {
         return new Command(commandName, args);
     }
 
+    public boolean getNextOK() throws IOException {
+        var line = reader.readLine();
+        return line.equals("+OK");
+    }
+
 }

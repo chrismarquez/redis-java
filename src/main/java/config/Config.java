@@ -33,4 +33,12 @@ public class Config {
         return Optional.ofNullable(this.configMap.get(key));
     }
 
+    public String getConfig(String key, String defaultValue) {
+        if (this.configMap.containsKey(key)) {
+            return this.configMap.get(key);
+        }
+        this.configMap.put(key, defaultValue);
+        return defaultValue;
+    }
+
 }

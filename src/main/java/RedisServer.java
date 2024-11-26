@@ -20,7 +20,7 @@ public class RedisServer {
         this.eventLoop = new RedisEventLoop(config, controller);
 
         try {
-            replicationService.sendPing();
+            replicationService.doHandshake();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -69,9 +69,8 @@ public class RedisServer {
 
     public static void main(String[] args) {
         Config config = new Config(args);
-        int port = config.getConfig("port")
-            .map(Integer::parseInt)
-            .orElse(6379);
+        String rawPort = config.getConfig("port",  "6379");
+        int port = Integer.parseInt(rawPort);
         RedisServer server = new RedisServer(config);
         server.listen(port);
     }

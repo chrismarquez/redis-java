@@ -61,7 +61,7 @@ public class RedisController {
     private Response handleKeys(Command command) {
         final var keys = storageService.getKeys();
         final var responses = keys.stream()
-            .map(key -> (Response) new BulkResponse(Optional.of(key)))
+            .map(key -> new BulkResponse(Optional.of(key)))
             .collect(Collectors.toList());
         return new ArrayResponse(responses);
     }
