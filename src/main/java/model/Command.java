@@ -11,6 +11,7 @@ public record Command(String rawName, List<String> args) {
         SET,
         CONFIG,
         KEYS,
+        INFO,
         UNKNOWN,
     }
 

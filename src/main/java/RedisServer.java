@@ -1,7 +1,8 @@
 import config.Config;
 import controller.RedisController;
 import model.RDBFile;
-import service.RedisService;
+import service.ReplicationService;
+import service.StorageService;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -13,13 +14,14 @@ public class RedisServer {
 
     public RedisServer(Config config) {
         this.config = config;
-        var service = new RedisService(config);
-        var controller = new RedisController(config, service);
+        var storageService = new StorageService(config);
+        var replicationService = new ReplicationService(config);
+        var controller = new RedisController(config, storageService, replicationService);
         this.eventLoop = new RedisEventLoop(config, controller);
-        loadStoredDatabases(config, service);
+        loadStoredDatabases(config, storageService);
     }
 
-    private void loadStoredDatabases(Config config, RedisService service){
+    private void loadStoredDatabases(Config config, StorageService service){
         final var directory = config.getConfig("dir").orElse("");
         final var fileName = config.getConfig("dbfilename").orElse("");
         final var path = directory + "/" + fileName;

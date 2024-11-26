@@ -6,7 +6,7 @@ import model.RDBFile;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class RedisService {
+public class StorageService {
 
     private final Map<String, String> values = new ConcurrentHashMap<>();
     private final Config config;
@@ -20,7 +20,7 @@ public class RedisService {
         new SynchronousQueue<>()
     );
 
-    public RedisService(Config config) {
+    public StorageService(Config config) {
         this.config = config;
     }
 
