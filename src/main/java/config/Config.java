@@ -25,6 +25,10 @@ public class Config {
         System.out.println(this.configMap);
     }
 
+    public boolean hasConfig(String key) {
+        return this.configMap.containsKey(key);
+    }
+
     public Optional<String> getConfig(String key) {
         return Optional.ofNullable(this.configMap.get(key));
     }

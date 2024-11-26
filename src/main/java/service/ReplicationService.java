@@ -11,7 +11,11 @@ public class ReplicationService {
 
     public ReplicationService(Config config) {
         this.config = config;
-        this.role = "master";
+        this.role = getRole();
+    }
+
+    private String getRole() {
+        return this.config.hasConfig("replicaof") ? "master" : "slave";
     }
 
     public Map<String, String> getReplicationInfo() {
