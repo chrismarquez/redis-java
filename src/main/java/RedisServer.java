@@ -18,6 +18,13 @@ public class RedisServer {
         var replicationService = new ReplicationService(config);
         var controller = new RedisController(config, storageService, replicationService);
         this.eventLoop = new RedisEventLoop(config, controller);
+
+        try {
+            replicationService.sendPing();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         loadStoredDatabases(config, storageService);
     }
 
