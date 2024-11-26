@@ -47,14 +47,13 @@ public class ReplicationService {
             var protocolReader = new RedisProtocolReader(reader);
             var protocolWriter = new RedisProtocolWriter(writer);
             protocolWriter.writeEncoded(getPing());
-            var pingSuccess = protocolReader.getNextOK();
+            var _ = protocolReader.getNextOK();
             protocolWriter.writeEncoded(getListeningPortConfig());
-            var listenPortSuccess = protocolReader.getNextOK();
+            var _ = protocolReader.getNextOK();
             protocolWriter.writeEncoded(getCapabilitiesConfig());
-            var capabilitiesSuccess = protocolReader.getNextOK();
-            System.out.println("PING: " + pingSuccess);
-            System.out.println("Listen: " + listenPortSuccess);
-            System.out.println("Capabilities: " + capabilitiesSuccess);
+            var _ = protocolReader.getNextOK();
+            protocolWriter.writeEncoded(getSync());
+            var _ = protocolReader.getNextOK();
         }
     }
 
@@ -74,6 +73,10 @@ public class ReplicationService {
 
     private Response getReplicaConfig(String key, String value) {
         return ArrayResponse.from("REPLCONF", key, value);
+    }
+
+    private Response getSync() {
+        return ArrayResponse.from("PSYNC", "?", "-1");
     }
 
     public Map<String, String> getReplicationInfo() {
