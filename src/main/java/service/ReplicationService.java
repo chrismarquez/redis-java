@@ -5,7 +5,6 @@ import config.Flags.ReplicaOf;
 import middleware.RedisProtocolReader;
 import middleware.RedisProtocolWriter;
 import model.Responses.ArrayResponse;
-import model.Responses.BulkResponse;
 import model.Responses.Response;
 
 import java.io.BufferedReader;
@@ -14,7 +13,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,7 +24,7 @@ public class ReplicationService {
     private final String replicationID = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
     private final int replicationOffset = 0;
 
-    private Optional<ReplicaOf> masterInfo;
+    private final Optional<ReplicaOf> masterInfo;
 
     public ReplicationService(Config config) {
         this.config = config;
